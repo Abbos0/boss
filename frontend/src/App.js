@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const API_URL = "http://localhost:5057"; // Backend manzili
-
+const API_URL = "https://boss-backend-3e5l.onrender.com"; // Backend manzili
 function App() {
   const [files, setFiles] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
