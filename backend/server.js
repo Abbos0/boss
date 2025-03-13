@@ -62,7 +62,7 @@ app.delete("/api/files/:filename", (req, res) => {
   });
 });
 
-app.listen(port, () => console.log(`🚀 Server ${port}-portda ishlamoqda...`));
+app.listen(PORT, () => console.log(`🚀 Server ${PORT}-portda ishlamoqda...`));
 
 
 
