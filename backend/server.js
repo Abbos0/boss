@@ -5,7 +5,8 @@ const cors = require("cors");
 const fs = require("fs");
 
 const app = express();
-const port = 5057;
+const PORT = process.env.PORT || 5057;
+
 
 app.use(cors({ origin: "*" }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
