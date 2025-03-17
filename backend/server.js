@@ -7,20 +7,19 @@ const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 5057;
 
-
 app.use(cors({ origin: "*" }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+  fs.mkdirSync(uploadDir, { recursive: true }); // Recursive qo'shildi
 }
 
 // Eng katta raqamni topish
 const getNextFileNumber = () => {
   const files = fs.readdirSync(uploadDir);
   const numbers = files
-    .map(file => parseInt(file.match(/^(\d+)_/)?.[1]))
+    .map(file => parseInt(file.match(/^(\d+)_/)?.[1] || "0")) // Null error tuzatildi
     .filter(num => !isNaN(num));
 
   return numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
@@ -40,11 +39,16 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-app.post("/api/upload", upload.array("files"), (req, res) => {
-  if (!req.files || req.files.length === 0) {
-    return res.status(400).json({ message: "Fayl tanlanmagan!" });
-  }
-  res.status(200).json({ message: "✅ Fayllar yuklandi!" });
+app.post("/api/upload", (req, res) => {
+  upload.array("files")(req, res, (err) => {
+    if (err) {
+      return res.status(500).json({ message: "Fayl yuklashda xatolik: " + err.message });
+    }
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "Fayl tanlanmagan!" });
+    }
+    res.status(200).json({ message: "✅ Fayllar yuklandi!", files: req.files });
+  });
 });
 
 app.get("/api/files", (req, res) => {
@@ -57,15 +61,17 @@ app.get("/api/files", (req, res) => {
 app.delete("/api/files/:filename", (req, res) => {
   const filePath = path.join(uploadDir, req.params.filename);
   fs.unlink(filePath, (err) => {
-    if (err) return res.status(500).json({ message: "Faylni o‘chirishda xatolik!" });
+    if (err) {
+      if (err.code === "ENOENT") {
+        return res.status(404).json({ message: "Fayl topilmadi!" });
+      }
+      return res.status(500).json({ message: "Faylni o‘chirishda xatolik: " + err.message });
+    }
     res.status(200).json({ message: "✅ Fayl o‘chirildi!" });
   });
 });
 
 app.listen(PORT, () => console.log(`🚀 Server ${PORT}-portda ishlamoqda...`));
-
-
-
 
 
 
